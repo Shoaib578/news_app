@@ -3,13 +3,13 @@ import { createStackNavigator,CardStyleInterpolators   } from '@react-navigation
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {View,Text,TextInput,Image, Dimensions, StatusBar,Modal, Touchable, TouchableOpacity, Keyboard} from 'react-native'
-import {useDispatch} from 'react-redux';
+import {useDispatch,useSelector} from 'react-redux';
 
 
 import TopNews from '../screens/top_news';
 import LatestNews from '../screens/latest_news';
 import styles from './styles';
-import {Filter_by_category} from '../redux/actions'
+import {Filter_by_category, VisibleModal, VisibleSearch} from '../redux/actions'
 import Entypo from 'react-native-vector-icons/Entypo';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
@@ -34,19 +34,26 @@ const categories2 = ["Business","World"]
 const categories3 = ["Pakistan","Live TV","Magazine"]
 
 export default function Routes ({routeNameRef}){
-   const [is_visible,setIsVisible] = useState(false)
-   const [want_to_search,setWantToSearch] = useState(false)
+   
+
  
 
    var searchRef = React.createRef()
    const dispatch = useDispatch()
 
    const LogoModal = (props)=>{
-        
-        return <Modal onDismiss={()=>setIsVisible(false)} animationType='slide' transparent visible={is_visible}>
+    const is_visible = useSelector(state => state.visibilityReducer.visible_modal);
+
+        console.log(is_visible)
+        return <Modal  animationType='slide' transparent visible={is_visible}>
         <View style={styles.modalContent}>
           <View style={styles.titleContainer}>
-            <Text onPress={()=>setIsVisible(false)} style={styles.title}>Close</Text>
+            <Text onPress={()=>{
+               dispatch({
+                type: VisibleModal,
+                payload:false
+              });
+            }} style={styles.title}>Close</Text>
             
           </View>
 
@@ -119,7 +126,7 @@ export default function Routes ({routeNameRef}){
          <View style={{alignSelf:'center',width:'70%',flexWrap:'wrap',flexDirection:'row',justifyContent:'space-between',marginTop:20}}>
           
          {categories3.map(category=>{
-          
+
              return <TouchableOpacity  key={category} onPress={()=>{
               if(category != "Live TV"){
                 dispatch({
@@ -130,7 +137,10 @@ export default function Routes ({routeNameRef}){
                   }
                 });
               }else{
-                setIsVisible(false)
+                dispatch({
+                  type: VisibleModal,
+                  payload:false
+                });
                 props.props.navigation.navigate("choose_news_channel")
               }
             
@@ -164,14 +174,18 @@ export default function Routes ({routeNameRef}){
         return null
     }
 
-  const  headerSearchBar = ()=>(
-    <>
+  const  headerSearchBar = ()=>{
+    const is_visible = useSelector(state => state.visibilityReducer.visibleSearch)
+    return <>
                 <StatusBar backgroundColor={'#023164'}/>
 
-        {want_to_search?<View style={{backgroundColor:'#023164',width:width,flexDirection:'row',height:'100%'}}>
+        {is_visible?<View style={{backgroundColor:'#023164',width:width,flexDirection:'row',height:'100%'}}>
 
                 <Pressable onPress={()=>{
-                    setWantToSearch(false)
+                    dispatch({
+                      type: VisibleSearch,
+                      payload:false
+                    });
                     Keyboard.dismiss()
                     }} style={{marginLeft:10,marginTop:12}}>
                 <Entypo name='cross' color={'white'} size={30}/>
@@ -196,19 +210,29 @@ export default function Routes ({routeNameRef}){
         </View>:null}
     </>
 
-    )
+            }
 
-    const headerRight = ()=>(
-        <Pressable onPress={()=>setWantToSearch(true)} style={{marginRight:28,marginTop:8}}>
+    const headerRight = ()=>{
+      const is_visible = useSelector(state => state.visibilityReducer.visibleSearch)
+
+      return <>
+      
+      {is_visible == false?<Pressable onPress={()=>{
+          dispatch({
+            type: VisibleSearch,
+            payload:true
+          });
+        }} style={{marginRight:28,marginTop:8}}>
             <FontAwesome name='search' color={'white'} size={25}/>
-        </Pressable>
-    )
+        </Pressable>:null}
+        </>  
+    }
 
   const  TopNewsStack = ()=>(
         <Stack.Navigator screenOptions={{gestureEnabled:true,gestureDirection:'horizontal', cardStyleInterpolator:CardStyleInterpolators.forHorizontalIOS,}}>
         <Stack.Screen
           name="top_news"
-          options={{headerLeft:headerSearchBar,headerRight:want_to_search == false?headerRight:null,headerTitle:want_to_search == false?'TOP':'',headerTitleAlign:'center',headerTitleStyle:{color:'white'},headerStyle:{backgroundColor:'#023164'}}}
+          options={{headerLeft:headerSearchBar,headerRight:headerRight,headerTitle:'TOP',headerTitleAlign:'center',headerTitleStyle:{color:'white'},headerStyle:{backgroundColor:'#023164'}}}
           component={TopNews}
           
         />
@@ -224,7 +248,7 @@ export default function Routes ({routeNameRef}){
         <Stack.Navigator screenOptions={{gestureEnabled:true,gestureDirection:'horizontal', cardStyleInterpolator:CardStyleInterpolators.forHorizontalIOS,}}>
         <Stack.Screen
           name="latest_news"
-          options={{headerLeft:headerSearchBar,headerRight:want_to_search == false?headerRight:null,headerTitle:want_to_search == false?'LATEST':'',headerTitleAlign:'center',headerTitleStyle:{color:'white'},headerStyle:{backgroundColor:'#023164'}}}
+          options={{headerLeft:headerSearchBar,headerRight:headerRight,headerTitle:'LATEST',headerTitleAlign:'center',headerTitleStyle:{color:'white'},headerStyle:{backgroundColor:'#023164'}}}
 
           component={LatestNews}
           
@@ -242,7 +266,12 @@ export default function Routes ({routeNameRef}){
       return <Tab.Navigator  screenOptions={{headerShown:false,tabBarInactiveBackgroundColor:'#023164',tabBarActiveBackgroundColor:'#023164',tabBarHideOnKeyboard:true}}>
       <Tab.Screen name="Top" options={{tabBarIcon:()=><Text style={{color:'white',fontSize:16,top:5}}>TOP</Text>,tabBarLabel:''}}  component={TopNewsStack} />
      
-      <Tab.Screen name="Logo" options={{tabBarButton:()=><View style={{backgroundColor:"#023164"}}><Text onPress={()=>setIsVisible(true)} style={{color:'white',fontSize:25,fontFamily:'serif'}}>NEWS</Text>
+      <Tab.Screen name="Logo" options={{tabBarButton:()=><View style={{backgroundColor:"#023164"}}><Text onPress={()=>{
+          dispatch({
+            type: VisibleModal,
+            payload:true
+          });
+      }} style={{color:'white',fontSize:25,fontFamily:'serif'}}>NEWS</Text>
       <LogoModal props={props}/>
       </View>,tabBarLabel:''}} component={LogoScreenComponent}/>
 

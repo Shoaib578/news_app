@@ -16,7 +16,7 @@ const initialState = {
         
         case Filter_by_category:
            return {...state,category:action.payload}
-        
+       
         default:
             return state
     }

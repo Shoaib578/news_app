@@ -58,7 +58,7 @@ export default function TopNews(props) {
 
     useEffect(()=>{
         if(category!= ""&&category.screen == "top_news"){
-            setIsLoading(true)
+            
             if(category.category != "top_news"){
                 console.log(category)
             get_news(category.category)

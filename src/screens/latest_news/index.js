@@ -82,7 +82,7 @@ export default function LatestNews(props) {
      
          useEffect(()=>{
              if(category != "" && category.screen == "latest_news"){
-                setIsLoading(true)
+               
                 if(category.category != "")
                  get_news(category.category)
                  
